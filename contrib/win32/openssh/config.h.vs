@@ -1331,7 +1331,7 @@
 /* #undef OPENSSL_EVP_DIGESTUPDATE_VOID */
 
 /* libcrypto includes complete ECC support */
-#define OPENSSL_HAS_ECC 1
+//#define OPENSSL_HAS_ECC 1
 
 /* libcrypto is missing AES 192 and 256 bit functions */
 /* #undef OPENSSL_LOBOTOMISED_AES */
@@ -1668,7 +1668,7 @@
 #define BROKEN_SYS_TERMIO_H
 
 
-#define WITH_OPENSSL 1
+//#define WITH_OPENSSL 1
 #define HAVE_DECL_NFDBITS 0
 #define HAVE_DECL_HOWMANY 0
 #define HAVE_STRTOULL 1
