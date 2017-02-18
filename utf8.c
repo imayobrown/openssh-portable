@@ -336,6 +336,7 @@ mprintf(const char *fmt, ...)
 
 	va_start(ap, fmt);
 	ret = vfmprintf(stdout, fmt, ap);
+	va_end(ap);
 	return ret;
 }
 
