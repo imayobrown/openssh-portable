@@ -231,7 +231,7 @@ long long strtonum(const char *, long long, long long, const char **);
 #endif
 
 #ifndef HAVE_WCWIDTH
-# define wcwidth	win32_wcwidth
+# define wcwidth	get_wcwidth
 /* force our no-op nl_langinfo and mbtowc */
 # undef HAVE_NL_LANGINFO
 #ifndef WINDOWS

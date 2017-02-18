@@ -69,8 +69,8 @@ ssh_compatible_openssl(long headerver, long libver)
 	return 0;
 }
 
-int win32_wcwidth(wchar_t wc)
-{
+int
+get_wcwidth(wchar_t wc) {
 	if (0x20 <= wc && wc <= 0x7e) {
 		/* ASCII */
 		return 1;
