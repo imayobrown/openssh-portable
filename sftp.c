@@ -293,24 +293,8 @@ help(void)
 }
 
 #ifdef WINDOWS
-/* printf version to account for utf-8 input */
-/* TODO - merge this with vfmprint */
-static void printf_utf8(char *fmt,  ... ) {
-	/* TODO - is 1024 sufficient */
-	char buf[1024];
-	int length = 0;
-	
-	va_list valist;
-	va_start(valist, fmt);
-	length = vsnprintf(buf, 1024, fmt, valist);
-	va_end(valist);
-
-	write(STDOUT_FILENO, buf, length);
-}
-
-/* override mprintf */
-#define mprintf(a,...)		printf_utf8((a), __VA_ARGS__)
-#define printf(a,...)		printf_utf8((a), __VA_ARGS__)
+/* override printf */
+//#define printf		mprintf
 #endif   /* WINDOWS */
 
 static void

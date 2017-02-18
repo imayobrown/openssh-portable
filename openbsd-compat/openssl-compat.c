@@ -31,6 +31,9 @@
 
 #include "openssl-compat.h"
 
+BOOL is_tm_Initialized = 0;
+TEXTMETRIC tm;
+
 /*
  * OpenSSL version numbers: MNNFFPPS: major minor fix patch status
  * We match major, minor, fix and status (not patch) for <1.0.0.
@@ -64,6 +67,102 @@ ssh_compatible_openssl(long headerver, long libver)
 	if ( (headerver & mask) == (libver & mask) && lfix >= hfix)
 		return 1;
 	return 0;
+}
+
+int win32_wcwidth(wchar_t wc)
+{
+	if (0x20 <= wc && wc <= 0x7e) {
+		/* ASCII */
+		return 1;
+	}
+	else if (0x3041 <= wc && wc <= 0x3094) {
+		/* Hiragana */
+		return 1;
+	}
+	else if (0x30a1 <= wc && wc <= 0x30f6) {
+		/* Katakana */
+		return 2;
+	}
+	else if (0x3105 <= wc && wc <= 0x312c) {
+		/* Bopomofo */
+		return 2;
+	}
+	else if (0x3131 <= wc && wc <= 0x318e) {
+		/* Hangul Elements */
+		return 2;
+	}
+	else if (0xac00 <= wc && wc <= 0xd7a3) {
+		/* Korean Hangul Syllables */
+		return 2;
+	}
+	else if (0xff01 <= wc && wc <= 0xff5e) {
+		/* Fullwidth ASCII variants */
+		return 2;
+	}
+	else if (0xff61 <= wc && wc <= 0xff9f) {
+		/* Halfwidth Katakana variants */
+		return 1;
+	}
+	else if ((0xffa0 <= wc && wc <= 0xffbe) ||
+		(0xffc2 <= wc && wc <= 0xffc7) ||
+		(0xffca <= wc && wc <= 0xffcf) ||
+		(0xffd2 <= wc && wc <= 0xffd7) ||
+		(0xffda <= wc && wc <= 0xffdc)) {
+		/* Halfwidth Hangule variants */
+		return 1;
+	}
+	else if (0xffe0 <= wc && wc <= 0xffe6) {
+		/* Fullwidth symbol variants */
+		return 2;
+	}
+	else if (0x4e00 <= wc && wc <= 0x9fa5) {
+		/* Han Ideographic */
+		return 2;
+	}
+	else if (0xf900 <= wc && wc <= 0xfa2d) {
+		/* Han Compatibility Ideographs */
+		return 2;
+	}
+	else {
+		/* Unknown character: need to use GDI*/
+		HWND hwnd;
+		HDC hDC;
+		int ret = 1, result = 0;
+		hwnd = GetConsoleWindow();
+		if (hwnd == NULL) {
+			ret = 1;
+			goto done;
+		}
+		hDC = GetDC(hwnd);
+		if (NULL == hDC) {				
+			ret = 1;
+			goto done;
+		}
+		if (!is_tm_Initialized) {
+			memset(&tm, L'\0', sizeof(tm));
+			BOOL result = GetTextMetricsW(hDC,  &tm);
+			if (!result) {
+				ret = -1;
+				goto done;
+			}
+			is_tm_Initialized = 1;
+		}
+		int width;
+		result = GetCharWidth32W(hDC, (UINT)wc, (UINT)wc, &width);
+		if (!result) {
+			ret = 1;
+			goto done;
+		}
+		if (width >= tm.tmMaxCharWidth) {
+			ret = 2;
+			goto done;
+		}
+done:
+		if (hwnd != NULL && hDC != NULL) {
+			ReleaseDC(hwnd, hDC);
+		}
+		return ret;
+	}
 }
 
 #ifdef	USE_OPENSSL_ENGINE
