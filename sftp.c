@@ -294,7 +294,7 @@ help(void)
 
 #ifdef WINDOWS
 /* override printf */
-//#define printf		mprintf
+#define printf		mprintf
 #endif   /* WINDOWS */
 
 static void
