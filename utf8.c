@@ -270,7 +270,7 @@ vfmprintf(FILE *stream, const char *fmt, va_list ap)
 	int file_num = 0;
 	intptr_t lHandle = 0;
 	HANDLE hFile = NULL;
-	DWORD dwType = 0, dwMode = 0, num_write;
+	DWORD type = 0, mode = 0, num_write;
 
 	if ((str_utf16 = utf8_to_utf16(str)) == NULL) {
 		errno = ENOMEM;
@@ -287,8 +287,8 @@ vfmprintf(FILE *stream, const char *fmt, va_list ap)
 		ret = -1;
 		goto done;
 	}
-	dwType = GetFileType((HANDLE)lHandle);
-	if(dwType == FILE_TYPE_CHAR && file_num >= 0 && file_num <=2 ) {
+	type = GetFileType((HANDLE)lHandle);
+	if(type == FILE_TYPE_CHAR && file_num >= 0 && file_num <=2 ) {
 		if (file_num == 0) 		
 			hFile = GetStdHandle(STD_INPUT_HANDLE);
 		else if (file_num == 1)
@@ -298,7 +298,7 @@ vfmprintf(FILE *stream, const char *fmt, va_list ap)
 		
 		if ((hFile != NULL) && (hFile != INVALID_HANDLE_VALUE) &&
 			(GetFileType(hFile) == FILE_TYPE_CHAR) &&
-			(GetConsoleMode(hFile, &dwMode) != FALSE))
+			(GetConsoleMode(hFile, &mode) != FALSE))
 				WriteConsoleW(hFile, str_utf16, wcslen(str_utf16), 0, 0);
 		else if(fputws(str_utf16, stream) == EOF)
 			ret = -1;
