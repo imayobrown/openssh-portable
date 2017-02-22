@@ -95,8 +95,8 @@ void ConSetAttribute( int *iParam, int iParamCount );
 int	ConScreenSizeX();
 int	ConSetScreenX();
 int ConScreenSizeY();
-int ConWindowSizeX();
-int ConWindowSizeY();
+int ConVisibleScreenWidth();
+int ConVisibleScreenHeight();
 int ConSetScreenY();
 void ConFillToEndOfLine();
 int ConWriteString(char* pszString, int cbString);
@@ -122,7 +122,7 @@ BOOL ConChangeCursor( CONSOLE_CURSOR_INFO *pCursorInfo );
 void ConSetCursorPosition(int x, int y);
 int ConGetCursorX();
 int ConGetCursorY();
-int ConGetCursorInBufferY(void);
+int ConGetBufferHeight(void);
 BOOL ConDisplayCursor( BOOL bVisible );
 void ConMoveCursorPosition(int x, int y);
 void ConGetRelativeCursorPosition(int *x, int *y);
@@ -134,6 +134,7 @@ void ConSaveViewRect( void );
 void ConRestoreViewRect( void );
 void ConDeleteChars(int n);
 void ConSaveWindowsState(void);
-
+void MoveVisibleScreenWindow();
+int is_cursor_at_lastline_of_visible_screen();
 
 #endif

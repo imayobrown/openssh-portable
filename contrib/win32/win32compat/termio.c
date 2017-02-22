@@ -43,6 +43,7 @@
 #define TERM_IO_BUF_SIZE 2048
 
 extern int in_raw_mode;
+extern BOOL bAnsiParsing;
 
 struct io_status {
 	DWORD to_transfer;
@@ -145,14 +146,14 @@ WriteThread(_In_ LPVOID lpParameter)
 	size_t resplen = 0;
 	DWORD dwSavedAttributes = ENABLE_PROCESSED_INPUT;
 	debug3("TermWrite thread, io:%p", pio);
-
-	if (in_raw_mode == 0) {
+	// in_raw_mode = 0;
+	if (in_raw_mode == 0 || false == bAnsiParsing) {
 		/* convert stream to utf16 and dump on console */
 		pio->write_details.buf[write_status.to_transfer] = '\0';
 		wchar_t* t = utf8_to_utf16(pio->write_details.buf);
 		WriteConsoleW(WINHANDLE(pio), t, wcslen(t), 0, 0);
 		free(t);
-		write_status.transferred = write_status.to_transfer;
+		write_status.transferred = write_status.to_transfer;		
 	} else {
 		/* console mode */
 		telProcessNetwork(pio->write_details.buf, write_status.to_transfer, &respbuf, &resplen);

@@ -122,7 +122,7 @@ ConInit(DWORD OutputHandle, BOOL fSmartInit)
 	ConSetScreenX();
 	ConSetScreenY();
 	ScrollTop = 0;
-	ScrollBottom = ConWindowSizeY();
+	ScrollBottom = ConVisibleScreenHeight();
 
 	if (GetConsoleScreenBufferInfo(hOutputConsole, &csbi))
 		SavedViewRect = csbi.srWindow;
@@ -446,9 +446,9 @@ ConScreenSizeY()
 	return (consoleInfo.srWindow.Bottom - consoleInfo.srWindow.Top + 1);
 }
 
-/* returns visible size of screen window */
+/* returns width of visible screen window */
 int
-ConWindowSizeX()
+ConVisibleScreenWidth()
 {
 	CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
 
@@ -458,9 +458,9 @@ ConWindowSizeX()
 	return (consoleInfo.srWindow.Right - consoleInfo.srWindow.Left + 1);
 }
 
-/* returns visible size of screen window */
+/* returns height of visible screen window */
 int
-ConWindowSizeY()
+ConVisibleScreenHeight()
 {
 	CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
 
@@ -1056,10 +1056,26 @@ ConScrollUp(int topline, int botline)
 }
 
 void 
+MoveVisibleScreenWindow()
+{
+	CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
+	SMALL_RECT visibleWindowRect;
+
+	if (!GetConsoleScreenBufferInfo(hOutputConsole, &consoleInfo))
+		return;
+
+	memcpy(&visibleWindowRect, &consoleInfo.srWindow, sizeof(visibleWindowRect));
+
+	visibleWindowRect.Top++;
+	visibleWindowRect.Bottom++;
+
+	SetConsoleWindowInfo(hOutputConsole, TRUE, &visibleWindowRect);
+}
+
+void 
 ConScrollDown(int topline, int botline)
 {
-	SMALL_RECT ScrollRect;
-	SMALL_RECT ClipRect;
+	SMALL_RECT ScrollRect;	
 	COORD destination;
 	CHAR_INFO Fill;
 	CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
@@ -1077,11 +1093,6 @@ ConScrollDown(int topline, int botline)
 
 	ScrollRect.Left = 0;
 	ScrollRect.Right = ConScreenSizeX() - 1;
-
-	ClipRect.Top = ScrollRect.Top;
-	ClipRect.Bottom = ScrollRect.Bottom;
-	ClipRect.Left = ScrollRect.Left;
-	ClipRect.Right = ScrollRect.Right;
 
 	destination.X = 0;
 	destination.Y = ScrollRect.Top - 1;
@@ -1115,6 +1126,35 @@ ConClearBOLine()
 	FillConsoleOutputCharacter(hOutputConsole, ' ',
 		(DWORD)(ConGetCursorX()),
 		Coord, &dwWritten);
+}
+
+void
+ConSetCursorRelativePosition(int x, int y)
+{
+	CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
+	COORD Coord;
+	int rc;
+
+	if (!GetConsoleScreenBufferInfo(hOutputConsole, &consoleInfo))
+		return;
+
+	Coord.X = (short)(consoleInfo.dwCursorPosition.X +  x);
+	Coord.Y = (short)(consoleInfo.dwCursorPosition.Y + y);
+
+	if ((y > consoleInfo.dwSize.Y - 1) && y > LastCursorY) {
+		for (int n = LastCursorY; n < y; n++)
+			GoToNextLine();
+	}
+
+	if (y >= consoleInfo.dwSize.Y) {
+		Coord.Y = consoleInfo.dwSize.Y - 1;
+	}
+
+	if (!SetConsoleCursorPosition(hOutputConsole, Coord))
+		rc = GetLastError();
+
+	LastCursorX = x;
+	LastCursorY = y;
 }
 
 void
@@ -1163,6 +1203,32 @@ ConGetCursorX()
 	return consoleInfo.dwCursorPosition.X;
 }
 
+int
+is_cursor_at_lastline_of_visible_screen()
+{
+	CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
+	int return_val = 0;
+
+	if (GetConsoleScreenBufferInfo(hOutputConsole, &consoleInfo)) {
+		int cursor_linenum_in_visible_window = consoleInfo.dwCursorPosition.Y - consoleInfo.srWindow.Top;
+		if (cursor_linenum_in_visible_window >= ConVisibleScreenHeight() - 1)
+			return_val = 1;
+	}
+
+	return return_val;
+}
+
+int
+my_ConGetCursorY()
+{
+	CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
+
+	if (!GetConsoleScreenBufferInfo(hOutputConsole, &consoleInfo))
+		return 0;
+
+	return consoleInfo.dwCursorPosition.Y;
+}
+
 int 
 ConGetCursorY()
 {
@@ -1171,18 +1237,19 @@ ConGetCursorY()
 	if (!GetConsoleScreenBufferInfo(hOutputConsole, &consoleInfo))
 		return 0;
 
-	return (consoleInfo.dwCursorPosition.Y - consoleInfo.srWindow.Top);
+	consoleInfo.dwCursorPosition.Y;
+	//return (consoleInfo.dwCursorPosition.Y - consoleInfo.srWindow.Top); /* todo - this logic is wrong, its not the current cursor*/
 }
 
 int 
-ConGetCursorInBufferY()
+ConGetBufferHeight()
 {
 	CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
 
 	if (!GetConsoleScreenBufferInfo(hOutputConsole, &consoleInfo))
 		return 0;
 
-	return (consoleInfo.dwCursorPosition.Y);
+	return (consoleInfo.dwSize.Y - 1);
 }
 
 void 
