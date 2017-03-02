@@ -41,6 +41,53 @@
 
 #include "utf8.h"
 
+#ifdef WINDOWS
+
+int	 mprintf(const char *fmt, ...) {
+	/* TODO - is 1024 sufficient */
+	char buf[1024];
+	int length = 0;
+
+	va_list valist;
+	va_start(valist, fmt);
+	length = vsnprintf(buf, 1024, fmt, valist);
+	va_end(valist);
+
+	w32_write(STDOUT_FILENO, buf, length);
+	return 0;
+}
+
+int	 fmprintf(FILE *f, const char *fmt, ...) {
+	/* TODO - is 1024 sufficient */
+	char buf[1024];
+	int length = 0;
+
+	va_list valist;
+	va_start(valist, fmt);
+	length = vsnprintf(buf, 1024, fmt, valist);
+	va_end(valist);
+
+	write(STDERR_FILENO, buf, length);
+	return 0;
+}
+int	 vfmprintf(FILE *f, const char *fmt, va_list list) {
+	return vfprintf(f, fmt, list);
+}
+int	 snmprintf(char *buf, size_t len, int *written, const char *fmt, ...) {
+	int num;
+	va_list valist;
+	va_start(valist, fmt);
+	num = vsnprintf(buf, len, fmt, valist);
+	va_end(valist);
+
+	*written = num;
+	return 0;
+}
+void	 msetlocale(void) {
+
+}
+
+#else
 static int	 dangerous_locale(void);
 static int	 grow_dst(char **, size_t *, size_t, char **, size_t);
 static int	 vasnmprintf(char **, size_t, int *, const char *, va_list);
@@ -337,3 +384,5 @@ msetlocale(void)
 	/* We can handle this locale */
 	setlocale(LC_CTYPE, "");
 }
+
+#endif
